@@ -5,19 +5,18 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.util.concurrent.Future
 
 class MainActivity : AppCompatActivity() {
     var secondsElapsed: Int = 0
     lateinit var textSecondsElapsed: TextView
-    private lateinit var executor: ExecutorService
+    private lateinit var myApp: MyApplication
+    private lateinit var task: Future<*>
 
     @SuppressLint("SetTextI18n")
-    private fun startNewExecutorService() {
-        executor = Executors.newSingleThreadExecutor()
-        executor.execute {
-            while (!executor.isShutdown) {
+    private fun startNewTask(): Future<*> {
+        return myApp.executor.submit {
+            while (!myApp.executor.isShutdown) {
                 Log.d("Thread: ", Thread.currentThread().name)
                 Thread.sleep(1000)
                 textSecondsElapsed.post {
@@ -31,6 +30,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         textSecondsElapsed = findViewById(R.id.textSecondsElapsed)
+        myApp = applicationContext as MyApplication
     }
 
     override fun onRestoreInstanceState(savedInstanceState: Bundle) {
@@ -45,11 +45,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        executor.shutdown()
+        task.cancel(true)
     }
 
     override fun onStart() {
         super.onStart()
-        startNewExecutorService()
+        task = startNewTask()
     }
 }
